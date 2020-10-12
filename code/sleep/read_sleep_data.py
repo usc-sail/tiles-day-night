@@ -4,77 +4,116 @@ from scipy import stats
 from datetime import timedelta
 
 
-def convert_days_at_work(days_at_work_df, participant_id, shift='day'):
-    if participant_id not in list(days_at_work_df.columns):
-        return pd.DataFrame()
+def process_main_sleep(sleep_df, timeline_df, realizd_df):
 
-    work_df = days_at_work_df[participant_id].dropna()
-    if len(work_df) == 0:
-        return pd.DataFrame()
-
-    work_df = work_df.sort_index()
-
-    save_df = pd.DataFrame()
-    for i in range(len(work_df)):
-        date_str = work_df.index[i]
-        if shift == 'day':
-            start_str = (pd.to_datetime(date_str).replace(hour=7)).strftime(date_time_format)[:-3]
-            end_str = (pd.to_datetime(date_str).replace(hour=7) + timedelta(hours=12)).strftime(date_time_format)[:-3]
-            row_df = pd.DataFrame(index=[start_str])
-            row_df['start'] = start_str
-            row_df['end'] = end_str
-            save_df = save_df.append(row_df)
-        else:
-            if i + 1 < len(work_df):
-                if (pd.to_datetime(work_df.index[i+1]) - pd.to_datetime(work_df.index[i])).total_seconds() < 2 * 3600 * 24:
-                    start_str = (pd.to_datetime(date_str).replace(hour=19)).strftime(date_time_format)[:-3]
-                    end_str = (pd.to_datetime(date_str).replace(hour=19) + timedelta(hours=12)).strftime(date_time_format)[:-3]
-                    row_df = pd.DataFrame(index=[start_str])
-                    row_df['start'] = start_str
-                    row_df['end'] = end_str
-                    save_df = save_df.append(row_df)
-
-    return save_df
-
-
-def process_main_sleep(sleep_df, workday_timeline_df, days_at_work_df):
-
+    sleep_df = sleep_df.sort_index()
     save_sleep_df = pd.DataFrame()
-    days_at_work_df = days_at_work_df.fillna(0)
-    for i in range(len(sleep_df)):
-        row_df = sleep_df.iloc[i, :]
-        start_str = row_df['startTime']
-        end_str = row_df['endTime']
+    for i in range(len(timeline_df)):
+        start_day_str = timeline_df['start'][i]
+        end_day_str = timeline_df['end'][i]
+        day_sleep_df = sleep_df[start_day_str:end_day_str]
 
-        start_off_list = list(pd.to_datetime(workday_timeline_df['start']) - pd.to_datetime(end_str))
-        # end_off_list = list(pd.to_datetime(start_str) - pd.to_datetime(workday_timeline_df['end']))
+        if len(day_sleep_df) == 0:
+            continue
 
-        save_row_df = pd.DataFrame(index=[start_str])
-        save_row_df['start'] = pd.to_datetime(start_str).hour + pd.to_datetime(start_str).minute / 60
-        save_row_df['end'] = pd.to_datetime(end_str).hour + pd.to_datetime(end_str).minute / 60
-        save_row_df['duration'] = (pd.to_datetime(end_str) - pd.to_datetime(start_str)).total_seconds() / 60
-        if float(days_at_work_df.loc[row_df['dateOfSleep'], id]) == 1.0:
-            save_row_df['workday'] = 1
-        else:
-            save_row_df['workday'] = 0
+        for j in range(len(day_sleep_df)):
+            row_df = day_sleep_df.iloc[j, :]
+            start_str = day_sleep_df.index[j]
+            end_str = row_df['endTime']
 
-        save_row_df['efficiency'] = row_df['efficiency']
-        save_row_df['minutesAsleep'] = row_df['minutesAsleep'] / row_df['timeInBed']
+            save_row_df = pd.DataFrame(index=[start_str])
+            save_row_df['start'] = pd.to_datetime(start_str).hour + pd.to_datetime(start_str).minute / 60
+            save_row_df['end'] = pd.to_datetime(end_str).hour + pd.to_datetime(end_str).minute / 60
+            save_row_df['duration'] = (pd.to_datetime(end_str) - pd.to_datetime(start_str)).total_seconds() / 60
+            save_row_df['mid'] = pd.to_datetime(start_str) + timedelta(minutes=int(save_row_df['duration']/2))
+            save_row_df['mid'] = pd.to_datetime(save_row_df['mid'][0]).hour + pd.to_datetime(save_row_df['mid'][0]).minute / 60
 
-        save_row_df['before_work'] = 0
-        for j in range(len(start_off_list)):
-            if 0 < start_off_list[j].total_seconds() < 6 * 3600:
-                save_row_df['before_work'] = 1
-        save_sleep_df = save_sleep_df.append(save_row_df)
+            save_row_df['total_seconds'] = np.nan
+            save_row_df['mean_seconds'] = np.nan
+            save_row_df['frequency'] = np.nan
+            if realizd_df is not None:
+                if len(realizd_df) > 700:
+                    inertia_end_str = (pd.to_datetime(end_str) + timedelta(hours=2)).strftime(date_time_format)[:-3]
+                    inertia_df = realizd_df[end_str:inertia_end_str]
+                    if len(inertia_df) != 0:
+                        save_row_df['total_seconds'] = np.nansum(inertia_df['duration']) / 60
+                        save_row_df['mean_seconds'] = np.nanmean(inertia_df['duration']) / 60
+                        save_row_df['frequency'] = len(inertia_df)
+
+            save_row_df['work'] = 1 if timeline_df['work'][i] == 1 else 0
+
+            save_row_df['efficiency'] = row_df['efficiency']
+            save_row_df['minutesAsleep'] = (row_df['minutesAsleep'] / row_df['timeInBed']) * 100
+
+            if save_row_df['minutesAsleep'][0] == 0:
+                save_row_df['minutesAsleep'] = np.nan
+
+            save_sleep_df = save_sleep_df.append(save_row_df)
 
     return save_sleep_df
 
 
-def return_sleep_stats(sleep_df, shift='day', work='workday'):
+def return_sleep_stats(data_df, shift='day', work='workday'):
     row_df = pd.DataFrame(index=[id])
-    row_df['duration'] = np.nanmean(sleep_df['duration'])
-    row_df['efficiency'] = np.nanmean(sleep_df['efficiency'])
-    row_df['minutesAsleep'] = np.nanmean(sleep_df['minutesAsleep'])
+
+    if len(data_df) < 5:
+        row_df['duration'] = np.nan
+        row_df['efficiency'] = np.nan
+        row_df['minutesAsleep'] = np.nan
+        row_df['total_seconds'] = np.nan
+        row_df['mean_seconds'] = np.nan
+        row_df['frequency'] = np.nan
+        row_df['mid'] = np.nan
+        row_df['start'] = np.nan
+        row_df['end'] = np.nan
+    else:
+        row_df['duration'] = np.nanmean(data_df['duration'])
+        row_df['efficiency'] = np.nanmean(data_df['efficiency'])
+        row_df['minutesAsleep'] = np.nanmean(data_df['minutesAsleep'])
+        row_df['total_seconds'] = np.nanmean(data_df['total_seconds'])
+        row_df['mean_seconds'] = np.nanmean(data_df['mean_seconds'])
+        row_df['frequency'] = np.nanmean(data_df['frequency'])
+
+    if work == 'all':
+        workday_sleep = sleep_df.loc[sleep_df['work'] == 1]
+        offday_sleep = sleep_df.loc[sleep_df['work'] == 0]
+
+        workday_mid_array = np.array(workday_sleep['mid'])
+        offday_mid_array = np.array(offday_sleep['mid'])
+        if shift == 'day':
+            # workday_mid_array[np.array(workday_mid_array) >= 12] = workday_mid_array[np.array(workday_mid_array) >= 12] - 24
+            # offday_mid_array[np.array(offday_mid_array) >= 12] = offday_mid_array[np.array(offday_mid_array) >= 12] - 24
+            row_df['mid'] = np.abs(np.nanmedian(workday_mid_array) - np.nanmedian(offday_mid_array)) * 60
+        else:
+            # offday_mid_array[np.array(offday_mid_array) >= 12] = offday_mid_array[np.array(offday_mid_array) >= 12] - 24
+            # workday_mid_array[np.array(workday_mid_array) >= 12] = workday_mid_array[np.array(workday_mid_array) >= 12] - 24
+            row_df['mid'] = np.abs(np.nanmedian(workday_mid_array) - np.nanmedian(offday_mid_array)) * 60
+
+        row_df['mid_std'] = np.nanstd(offday_mid_array)
+        row_df['duration_diff'] = np.abs(np.nanmedian(np.array(workday_sleep['duration'])) - np.nanmedian(np.array(offday_sleep['duration'])))
+    else:
+        mid_array = np.array(data_df['mid'])
+        start_array = np.array(data_df['start'])
+        end_array = np.array(data_df['end'])
+        if shift == 'day':
+            mid_array[np.array(mid_array) >= 12] = mid_array[np.array(mid_array) >= 12] - 24
+            start_array[np.array(start_array) >= 12] = start_array[np.array(start_array) >= 12] - 24
+
+            row_df['start'] = np.nanmedian(start_array) + 24 if np.nanmedian(start_array) < 0 else np.nanmedian(start_array)
+            row_df['end'] = np.nanmedian(end_array) + 24 if np.nanmedian(end_array) < 0 else np.nanmedian(end_array)
+            row_df['mid'] = np.nanmedian(mid_array)
+        else:
+            if work == 'offday':
+                mid_array[np.array(mid_array) >= 12] = mid_array[np.array(mid_array) >= 12] - 24
+                start_array[np.array(start_array) >= 12] = start_array[np.array(start_array) >= 12] - 24
+                row_df['start'] = np.nanmedian(start_array) + 24 if np.nanmedian(start_array) < 0 else np.nanmedian(start_array)
+                row_df['end'] = np.nanmedian(end_array) + 24 if np.nanmedian(end_array) < 0 else np.nanmedian(end_array)
+                row_df['mid'] = np.nanmedian(mid_array) + 24 if np.nanmedian(mid_array) < 0 else np.nanmedian(mid_array)
+            else:
+                row_df['start'] = np.nanmedian(start_array)
+                row_df['end'] = np.nanmedian(end_array)
+                row_df['mid'] = np.nanmedian(mid_array)
+
     row_df['shift'] = shift
     row_df['work'] = work
     return row_df
@@ -88,8 +127,8 @@ def print_stats(sleep_df, col, func=stats.kruskal, func_name='K-S'):
     print('Number of valid participant: day: %i; night: %i\n' % (len(day_nurse_df[col].dropna()), len(night_nurse_df[col].dropna())))
 
     # Print
-    print('Day shift: mean = %.3f, std = %.2f' % (np.nanmean(day_nurse_df[col]), np.nanstd(day_nurse_df[col])))
-    print('Night shift: mean = %.3f, std = %.2f' % (np.nanmean(night_nurse_df[col]), np.nanstd(night_nurse_df[col])))
+    print('Day shift: median = %.2f, mean = %.2f' % (np.nanmedian(day_nurse_df[col]), np.nanmean(day_nurse_df[col])))
+    print('Night shift: median = %.2f, mean = %.2f' % (np.nanmedian(night_nurse_df[col]), np.nanmean(night_nurse_df[col])))
 
     # stats test
     stat, p = func(day_nurse_df[col].dropna(), night_nurse_df[col].dropna())
@@ -100,74 +139,62 @@ def print_stats(sleep_df, col, func=stats.kruskal, func_name='K-S'):
 if __name__ == '__main__':
     # Read ground truth data
     bucket_str = 'tiles-phase1-opendataset'
-    root_data_path = Path(__file__).parent.absolute().parents[1].joinpath('data', bucket_str)
+    root_data_path = Path(__file__).parent.absolute().parents[1].joinpath('data')
 
     # read ground-truth data
-    igtb_df = read_AllBasic(root_data_path)
-    days_at_work_df = read_days_at_work(root_data_path)
+    igtb_df = read_AllBasic(root_data_path.joinpath(bucket_str))
 
     nurse_df = return_nurse_df(igtb_df)
-    # day_nurse_id = list(nurse_df.loc[nurse_df['Shift'] == 'Day shift'].participant_id)
-    # night_nurse_id = list(nurse_df.loc[nurse_df['Shift'] == 'Night shift'].participant_id)
-
-    day_sleep_start_workday_list, day_sleep_end_workday_list = [], []
-    day_sleep_start_offday_list, day_sleep_end_offday_list = [], []
-
-    night_sleep_start_workday_list, night_sleep_end_workday_list = [], []
-    night_sleep_start_offday_list, night_sleep_end_offday_list = [], []
-
     sleep_stats_df = pd.DataFrame()
 
     id_list = list(nurse_df['participant_id'])
     id_list.sort()
+
     for id in id_list:
 
         shift = 'day' if nurse_df.loc[nurse_df['participant_id'] == id].Shift[0] == 'Day shift' else 'night'
-        sleep_metadata_df = read_sleep_data(root_data_path, id)
+        sleep_metadata_df = read_sleep_data(root_data_path.joinpath(bucket_str), id)
+        realizd_df = read_realizd_data(root_data_path.joinpath(bucket_str), id)
         if sleep_metadata_df is None:
             continue
 
-        main_sleep_df = sleep_metadata_df.loc[sleep_metadata_df['isMainSleep'] == True]
-        workday_timeline_df = convert_days_at_work(days_at_work_df, id, shift=shift)
+        print('Process participant: %s' % (id))
 
-        if len(main_sleep_df) < 14 or len(workday_timeline_df) < 14:
+        if Path.exists(root_data_path.joinpath('processed', 'timeline', id + '.csv.gz')) is False:
+            continue
+        timeline_df = pd.read_csv(root_data_path.joinpath('processed', 'timeline', id + '.csv.gz'), index_col=0)
+        main_sleep_df = sleep_metadata_df.loc[sleep_metadata_df['isMainSleep'] == True]
+
+        if len(main_sleep_df) < 10:
             continue
 
-        sleep_df = process_main_sleep(main_sleep_df, workday_timeline_df, days_at_work_df)
+        sleep_df = process_main_sleep(main_sleep_df, timeline_df, realizd_df)
 
-        workday_sleep = sleep_df.loc[sleep_df['before_work'] == 1]
-        offday_sleep = sleep_df.loc[sleep_df['before_work'] == 0]
+        workday_sleep = sleep_df.loc[sleep_df['work'] == 1]
+        offday_sleep = sleep_df.loc[sleep_df['work'] == 0]
 
         sleep_stats_df = sleep_stats_df.append(return_sleep_stats(sleep_df, shift=shift, work='all'))
         sleep_stats_df = sleep_stats_df.append(return_sleep_stats(workday_sleep, shift=shift, work='workday'))
         sleep_stats_df = sleep_stats_df.append(return_sleep_stats(offday_sleep, shift=shift, work='offday'))
 
-        if shift == 'day':
-            for i in range(len(workday_sleep)):
-                day_sleep_start_workday_list.append(workday_sleep['start'][i])
-                day_sleep_end_workday_list.append(workday_sleep['end'][i])
-            for i in range(len(offday_sleep)):
-                day_sleep_start_offday_list.append(offday_sleep['start'][i])
-                day_sleep_end_offday_list.append(offday_sleep['end'][i])
-        else:
-            for i in range(len(workday_sleep)):
-                night_sleep_start_workday_list.append(workday_sleep['start'][i])
-                night_sleep_end_workday_list.append(workday_sleep['end'][i])
-            for i in range(len(offday_sleep)):
-                night_sleep_start_offday_list.append(offday_sleep['start'][i])
-                night_sleep_end_offday_list.append(offday_sleep['end'][i])
+    sleep_stats_df.to_csv(Path.joinpath(Path.cwd(), 'sleep.csv.gz'), compression='gzip')
+    compare_cols = ['duration', 'efficiency', 'minutesAsleep', 'total_seconds', 'mean_seconds', 'frequency']
 
-    compare_cols = ['duration', 'efficiency', 'minutesAsleep']
+    print('-----------workday-----------')
+    all_sleep_sleep = sleep_stats_df.loc[sleep_stats_df['work'] == 'all']
+    for col in ['mid', 'duration_diff', 'mid_std']:
+        print_stats(all_sleep_sleep, col, func=stats.mannwhitneyu)
+
     print('-----------workday-----------')
     workday_sleep_sleep = sleep_stats_df.loc[sleep_stats_df['work'] == 'workday']
     for col in compare_cols:
-        print_stats(workday_sleep_sleep, col)
+        print_stats(workday_sleep_sleep, col, func=stats.mannwhitneyu)
         # print_stats(sleep_stats_df.loc[sleep_stats_df['shift'] == 'day'], col)
 
     print('------------offday------------')
     offday_sleep_sleep = sleep_stats_df.loc[sleep_stats_df['work'] == 'offday']
     for col in compare_cols:
-        print_stats(offday_sleep_sleep, col)
+        print_stats(offday_sleep_sleep, col, func=stats.mannwhitneyu)
         # print_stats(sleep_stats_df.loc[sleep_stats_df['shift'] == 'night'], col)
 
 

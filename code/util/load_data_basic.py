@@ -222,9 +222,9 @@ def read_PSQI_Raw(data_directory):
 
 # Load mgt data
 def read_MGT(data_directory):
-    anxiety_mgt_df = pd.read_csv(os.path.join(data_directory, 'surveys', 'scored', 'EMAs', 'anxiety.csv.gz'))
-    stress_mgt_df = pd.read_csv(os.path.join(data_directory, 'surveys', 'scored', 'EMAs', 'stressd.csv.gz'))
-    pand_mgt_df = pd.read_csv(os.path.join(data_directory, 'surveys', 'scored', 'EMAs', 'pand.csv.gz'))
+    anxiety_mgt_df = pd.read_csv(os.path.join(data_directory, 'surveys', 'scored', 'EMAs', 'anxiety.csv.gz'), index_col=3)
+    stress_mgt_df = pd.read_csv(os.path.join(data_directory, 'surveys', 'scored', 'EMAs', 'stressd.csv.gz'), index_col=3)
+    pand_mgt_df = pd.read_csv(os.path.join(data_directory, 'surveys', 'scored', 'EMAs', 'pand.csv.gz'), index_col=3)
 
     return anxiety_mgt_df, stress_mgt_df, pand_mgt_df
 

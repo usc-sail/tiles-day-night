@@ -45,3 +45,4 @@ if __name__ == '__main__':
     download_data(save_root_path.joinpath(bucket_str), opendataset_bucket, prefix='fitbit')
     download_data(save_root_path.joinpath(bucket_str), opendataset_bucket, prefix='survey')
     download_data(save_root_path.joinpath(bucket_str), opendataset_bucket, prefix='metadata')
+    download_data(save_root_path.joinpath(bucket_str), opendataset_bucket, prefix='realizd')

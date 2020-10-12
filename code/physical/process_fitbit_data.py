@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     id_list = list(nurse_df['participant_id'])
     id_list.sort()
-    for id in id_list[60:]:
+    for id in id_list[:]:
         print('Process participant: %s' % (id))
         shift = 'day' if nurse_df.loc[nurse_df['participant_id'] == id].Shift[0] == 'Day shift' else 'night'
         hr_df, step_df = read_fitbit_data(root_data_path, id)
