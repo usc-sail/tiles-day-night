@@ -5,6 +5,8 @@ from datetime import timedelta
 from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GroupShuffleSplit
+from sklearn.metrics import precision_recall_fscore_support
 
 
 def process_mgt(mgt_df, fitbit_df, sleep_metadata_df, maximum_hr, median_value, type='anxiety'):
@@ -35,7 +37,7 @@ def process_mgt(mgt_df, fitbit_df, sleep_metadata_df, maximum_hr, median_value, 
         tmp_sleep_row_df = tmp_sleep_df.iloc[-1, :]
         save_row_df['efficiency'] = tmp_sleep_row_df['efficiency']
         save_row_df['duration'] = np.abs((pd.to_datetime(tmp_sleep_df.index[-1]) - pd.to_datetime(tmp_sleep_row_df['endTime'])).total_seconds() / 60)
-        save_row_df['minutesAsleep'] = tmp_sleep_row_df['minutesAsleep'] / save_row_df['duration']
+        save_row_df['minutesAsleep'] = tmp_sleep_row_df['minutesAsleep'] / save_row_df['duration'] * 100
         if save_row_df['minutesAsleep'][0] == 0:
             save_row_df['minutesAsleep'] = np.nan
 
@@ -117,7 +119,7 @@ if __name__ == '__main__':
         for col in mgt_cols:
             data_ml_df = training_df.loc[training_df['type'] == col]
             unique_day_id = list(set(data_ml_df.id))
-            feat_cols = ['rest', 'moderate', 'vigorous', 'step', 'efficiency', 'duration']
+            feat_cols = ['rest', 'moderate', 'vigorous', 'step', 'minutesAsleep', 'duration']
             x = np.array(data_ml_df[feat_cols])
             x = (x - np.mean(x, axis=0)) / np.std(x, axis=0)
             y = np.array(data_ml_df['score'])
@@ -125,30 +127,43 @@ if __name__ == '__main__':
             print("training %s, %.3f" % (col, np.nanmean(np.array(y==1))))
             groups = np.array(data_ml_df['id'])
 
-            gkf = list(GroupKFold(n_splits=5).split(x, y, groups))
-            rfc = RandomForestClassifier(random_state=42)
-            param_grid = {
-                'n_estimators': [50, 100, 200],
-                'max_features': ['auto', 'sqrt'],
-                'max_depth': [4, 5, 6, 7, 8],
-                'criterion': ['gini', 'entropy']
-            }
+            gss = GroupShuffleSplit(n_splits=1, train_size=.8, random_state=42)
+            for train_idx, test_idx in gss.split(x, y, groups):
 
-            CV_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=gkf, scoring='f1_micro')
-            CV_rfc.fit(x, y)
+                train_data, train_lable, train_group = x[train_idx, :], y[train_idx], groups[train_idx]
+                test_data, test_lable, test_group = x[test_idx, :], y[test_idx], groups[test_idx]
 
-            row_df = pd.DataFrame(index=[col])
-            row_df['type'] = col
-            row_df['shift'] = training_df['shift'][0]
-            row_df['score'] = CV_rfc.best_score_
-            for j in range(len(CV_rfc.best_estimator_.feature_importances_)):
-                row_df[feat_cols[j]] = CV_rfc.best_estimator_.feature_importances_[j]
+                gkf = list(GroupKFold(n_splits=5).split(train_data, train_lable, train_group))
+                rfc = RandomForestClassifier(random_state=42)
 
-            row_df['n_estimators'] = CV_rfc.best_estimator_.n_estimators
-            row_df['max_features'] = CV_rfc.best_estimator_.max_features
-            row_df['max_depth'] = CV_rfc.best_estimator_.max_depth
-            row_df['criterion'] = CV_rfc.best_estimator_.criterion
-            result_df = result_df.append(row_df)
+                param_grid = {
+                    'n_estimators': [50, 100, 200],
+                    'max_features': ['auto', 'sqrt'],
+                    'max_depth': [4, 5, 6, 7, 8],
+                    'criterion': ['gini', 'entropy']
+                }
+
+                CV_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=gkf, scoring='f1_macro')
+                CV_rfc.fit(train_data, train_lable)
+
+                test_predict = CV_rfc.best_estimator_.predict(test_data)
+                precision, recall, f_score, sum = precision_recall_fscore_support(test_lable, test_predict, average='macro')
+
+                row_df = pd.DataFrame(index=[col])
+                row_df['type'] = col
+
+                row_df['shift'] = training_df['shift'][0]
+                row_df['precision'] = precision
+                row_df['recall'] = recall
+                row_df['f_score'] = f_score
+                for j in range(len(CV_rfc.best_estimator_.feature_importances_)):
+                    row_df[feat_cols[j]] = CV_rfc.best_estimator_.feature_importances_[j]
+
+                row_df['n_estimators'] = CV_rfc.best_estimator_.n_estimators
+                row_df['max_features'] = CV_rfc.best_estimator_.max_features
+                row_df['max_depth'] = CV_rfc.best_estimator_.max_depth
+                row_df['criterion'] = CV_rfc.best_estimator_.criterion
+                result_df = result_df.append(row_df)
 
     result_df.to_csv(Path.cwd().joinpath('mgt_prediction.csv.gz'), compression='gzip')
 
