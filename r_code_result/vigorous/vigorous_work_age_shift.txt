@@ -1,0 +1,20 @@
+             Df Sum Sq Mean Sq F value   Pr(>F)    
+shift         1   46.8   46.84   2.017 0.158587    
+age           1  268.0  267.99  11.541 0.000975 ***
+gender        1   35.5   35.51   1.529 0.219106    
+Residuals   101 2345.2   23.22                     
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+ shift emmean    SE  df lower.CL upper.CL
+ day     4.05 0.653 101     2.75     5.35
+ night   3.23 0.804 101     1.64     4.83
+
+Results are averaged over the levels of: age, gender 
+Confidence level used: 0.95 
+The ANOVA (formula: vigorous_min ~ shift + age + gender) suggests that:
+
+  - The main effect of shift is not significant and small (F(1, 101) = 2.02, p = 0.159; Eta2 (partial) = 0.02, 90% CI [0.00, 0.09])
+  - The main effect of age is significant and medium (F(1, 101) = 11.54, p < .001; Eta2 (partial) = 0.10, 90% CI [0.03, 0.20])
+  - The main effect of gender is not significant and small (F(1, 101) = 1.53, p = 0.219; Eta2 (partial) = 0.01, 90% CI [0.00, 0.08])
+
+Effect sizes were labelled following Field's (2013) recommendations.

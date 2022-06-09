@@ -1,0 +1,86 @@
+[1] "Facial variance LMM"
+Linear mixed model fit by REML. t-tests use Satterthwaite's method ['lmerModLmerTest']
+Formula: pand_NegAffect ~ work * shift + (1 | id)
+   Data: df
+
+REML criterion at convergence: 25635.2
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-4.2411 -0.4248 -0.1638  0.1723  7.6379 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 3.253    1.804   
+ Residual             4.072    2.018   
+Number of obs: 5947, groups:  id, 107
+
+Fixed effects:
+                     Estimate Std. Error         df t value Pr(>|t|)    
+(Intercept)           6.43907    0.22694  109.42827  28.373   <2e-16 ***
+workoff              -0.07368    0.06810 5858.56862  -1.082   0.2793    
+shiftnight            0.20802    0.36697  109.86216   0.567   0.5720    
+workoff:shiftnight   -0.25967    0.11296 5856.09625  -2.299   0.0215 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) workff shftng
+workoff     -0.140              
+shiftnight  -0.618  0.087       
+wrkff:shftn  0.084 -0.603 -0.144
+$emmeans
+ work shift   emmean        SE  df asymp.LCL asymp.UCL
+ work day   6.439067 0.2269424 Inf  5.994268  6.883866
+ off  day   6.365383 0.2276151 Inf  5.919266  6.811501
+ work night 6.647082 0.2883822 Inf  6.081863  7.212301
+ off  night 6.313729 0.2892590 Inf  5.746792  6.880666
+
+Degrees-of-freedom method: asymptotic 
+Confidence level used: 0.95 
+
+$contrasts
+ contrast                 estimate        SE  df z.ratio p.value
+ work day - off day      0.0736836 0.0681001 Inf  1.082  0.7006 
+ work day - work night  -0.2080151 0.3669702 Inf -0.567  0.9419 
+ work day - off night    0.1253376 0.3676596 Inf  0.341  0.9864 
+ off day - work night   -0.2816987 0.3673867 Inf -0.767  0.8694 
+ off day - off night     0.0516540 0.3680753 Inf  0.140  0.9990 
+ work night - off night  0.3333527 0.0901192 Inf  3.699  0.0012 
+
+Degrees-of-freedom method: asymptotic 
+P value adjustment: tukey method for comparing a family of 4 estimates 
+
+
+  Posthoc multiple comparisons of means : Fisher LSD 
+    95% family-wise confidence level
+
+$work
+                diff     lwr.ci     upr.ci   pval    
+off-work -0.08884928 -0.2279565 0.05025796 0.2106    
+
+$shift
+               diff      lwr.ci    upr.ci   pval    
+night-day 0.1461147 0.001425503 0.2908039 0.0478 *  
+
+$`work:shift`
+                            diff      lwr.ci     upr.ci    pval    
+off:day-work:day      0.06770282 -0.10590103  0.2413067 0.44459    
+work:night-work:day   0.34845526  0.15101011  0.5459004 0.00054 ***
+off:night-work:day   -0.02086869 -0.22828654  0.1865491 0.84365    
+work:night-off:day    0.28075244  0.07782624  0.4836786 0.00670 ** 
+off:night-off:day    -0.08857151 -0.30121351  0.1240705 0.41422    
+off:night-work:night -0.36932395 -0.60183827 -0.1368096 0.00186 ** 
+
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+[1] "-----------------------------------"
+[1] "-----------------------------------"
+We fitted a linear mixed model (estimated using REML and nloptwrap optimizer) to predict pand_NegAffect with work and shift (formula: pand_NegAffect ~ work * shift). The model included id as random effect (formula: ~1 | id). The model's total explanatory power is substantial (conditional R2 = 0.45) and the part related to the fixed effects alone (marginal R2) is of 1.71e-03. The model's intercept, corresponding to work = work and shift = day, is at 6.44 (95% CI [5.99, 6.88], t(5941) = 28.37, p < .001). Within this model:
+
+  - The effect of work [off] is non-significantly negative (beta = -0.07, 95% CI [-0.21, 0.06], t(5941) = -1.08, p = 0.279; Std. beta = -0.03, 95% CI [-0.08, 0.02])
+  - The effect of shift [night] is non-significantly positive (beta = 0.21, 95% CI [-0.51, 0.93], t(5941) = 0.57, p = 0.571; Std. beta = 0.08, 95% CI [-0.19, 0.34])
+  - The interaction effect of shift [night] on work [off] is significantly negative (beta = -0.26, 95% CI [-0.48, -0.04], t(5941) = -2.30, p < .05; Std. beta = -0.10, 95% CI [-0.18, -0.01])
+
+Standardized parameters were obtained by fitting the model on a standardized version of the dataset. 95% Confidence Intervals (CIs) and p-values were computed using the Wald approximation.

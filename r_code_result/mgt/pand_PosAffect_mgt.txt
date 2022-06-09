@@ -1,0 +1,47 @@
+[1] "Facial variance LMM"
+Linear mixed model fit by REML. t-tests use Satterthwaite's method ['lmerModLmerTest']
+Formula: pand_PosAffect ~ work * shift + (1 | id)
+   Data: df
+
+REML criterion at convergence: 31808
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-4.6242 -0.5694 -0.0652  0.5748  3.9047 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 18.71    4.326   
+ Residual             11.36    3.371   
+Number of obs: 5947, groups:  id, 107
+
+Fixed effects:
+                    Estimate Std. Error        df t value Pr(>|t|)    
+(Intercept)          13.4242     0.5383  107.1993  24.940   <2e-16 ***
+workoff              -0.2462     0.1138 5848.4338  -2.163   0.0306 *  
+shiftnight           -0.3746     0.8699  107.4030  -0.431   0.6676    
+workoff:shiftnight    0.3002     0.1888 5847.1545   1.590   0.1118    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) workff shftng
+workoff     -0.099              
+shiftnight  -0.619  0.061       
+wrkff:shftn  0.060 -0.603 -0.102
+ work   emmean        SE  df asymp.LCL asymp.UCL
+ work 13.23694 0.4349681 Inf  12.38442  14.08947
+ off  13.14087 0.4356184 Inf  12.28708  13.99467
+
+Results are averaged over the levels of: shift 
+Degrees-of-freedom method: asymptotic 
+Confidence level used: 0.95 
+[1] "-----------------------------------"
+[1] "-----------------------------------"
+We fitted a linear mixed model (estimated using REML and nloptwrap optimizer) to predict pand_PosAffect with work and shift (formula: pand_PosAffect ~ work * shift). The model included id as random effect (formula: ~1 | id). The model's total explanatory power is substantial (conditional R2 = 0.62) and the part related to the fixed effects alone (marginal R2) is of 7.54e-04. The model's intercept, corresponding to work = work and shift = day, is at 13.42 (95% CI [12.37, 14.48], t(5941) = 24.94, p < .001). Within this model:
+
+  - The effect of work [off] is significantly negative (beta = -0.25, 95% CI [-0.47, -0.02], t(5941) = -2.16, p < .05; Std. beta = -0.04, 95% CI [-0.08, -4.18e-03])
+  - The effect of shift [night] is non-significantly negative (beta = -0.37, 95% CI [-2.08, 1.33], t(5941) = -0.43, p = 0.667; Std. beta = -0.07, 95% CI [-0.38, 0.24])
+  - The interaction effect of shift [night] on work [off] is non-significantly positive (beta = 0.30, 95% CI [-0.07, 0.67], t(5941) = 1.59, p = 0.112; Std. beta = 0.05, 95% CI [-0.01, 0.12])
+
+Standardized parameters were obtained by fitting the model on a standardized version of the dataset. 95% Confidence Intervals (CIs) and p-values were computed using the Wald approximation.

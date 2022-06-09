@@ -3,28 +3,28 @@ from scipy import stats
 from scipy.stats import skew
 
 
-def print_stats(igtb_df, col, func=stats.kruskal, func_name='K-S'):
-    # shift_pre-study
-    igtb_df = igtb_df.loc[igtb_df['job'] == 'nurse']
-    day_nurse_df = igtb_df.loc[igtb_df['Shift'] == 'Day shift']
-    night_nurse_df = igtb_df.loc[igtb_df['Shift'] == 'Night shift']
+def print_stats(igtb_df, col, demo='', demo_option=[], func=stats.kruskal, group=''):
+    first_df = igtb_df.loc[igtb_df[demo] == demo_option[0]]
+    second_df = igtb_df.loc[igtb_df[demo] == demo_option[1]]
 
+    print('Group')
     print(col)
-    print('Number of valid participant: day: %i; night: %i\n' % (len(day_nurse_df[col].dropna()), len(night_nurse_df[col].dropna())))
+    print('Number of valid participant: %s: %i; %s: %i\n' % (demo_option[0], len(first_df[col].dropna()),
+                                                             demo_option[1], len(second_df[col].dropna())))
 
     # Print
     # print('Total: mean = %.2f, std = %.2f, range is %.3f - %.3f' % (np.mean(igtb_df[col]), np.std(igtb_df[col]), np.min(igtb_df[col]), np.max(igtb_df[col])))
-    print('Day shift: mean = %.2f, std = %.2f' % (np.nanmean(day_nurse_df[col]), np.nanstd(day_nurse_df[col])))
+    print('%s: mean = %.2f, std = %.2f' % (demo_option[0], np.nanmean(first_df[col]), np.nanstd(second_df[col])))
     # print('Day shift: range is %.3f - %.3f' % (np.min(day_nurse_df[col]), np.max(day_nurse_df[col])))
     # print('Day shift: skew = %.3f' % (skew(day_nurse_df[col])))
 
-    print('Night shift: mean = %.2f, std = %.2f' % (np.nanmean(night_nurse_df[col]), np.nanstd(night_nurse_df[col])))
+    print('%s: mean = %.2f, std = %.2f' % (demo_option[1], np.nanmean(first_df[col]), np.nanstd(second_df[col])))
     # print('Night shift: range is %.3f - %.3f' % (np.min(night_nurse_df[col]), np.max(night_nurse_df[col])))
     # print('Night shift: skew = %.3f' % (skew(night_nurse_df[col])))
 
     # stats test
-    stat, p = func(day_nurse_df[col].dropna(), night_nurse_df[col].dropna())
-    print(func_name + ' test for %s' % col)
+    stat, p = func(first_df[col].dropna(), second_df[col].dropna())
+    print('test for %s' % col)
     print('Statistics = %.3f, p = %.3f\n\n' % (stat, p))
 
 
@@ -84,5 +84,5 @@ if __name__ == '__main__':
     supervise_df = nurse_df.loc[nurse_df['supervise'] == 1]
     print('Supervisor: %d (%.2f)' % (len(supervise_df), len(supervise_df) / len(nurse_df) * 100))
 
-    print()
+
 

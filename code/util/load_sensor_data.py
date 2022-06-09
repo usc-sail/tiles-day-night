@@ -49,9 +49,9 @@ def read_fitbit_data(data_directory, id):
 
 # Load fitbit data
 def read_prossed_fitbit_data(data_directory, id):
-    if Path.exists(Path.joinpath(Path.resolve(data_directory).parent, 'processed', 'fitbit', id + '.csv.gz')) is False:
+    if Path.exists(Path.joinpath(Path.resolve(data_directory), 'processed', 'fitbit', id + '.csv.gz')) is False:
         return None
-    fitbit_df = pd.read_csv(Path.joinpath(Path.resolve(data_directory).parent, 'processed', 'fitbit', id + '.csv.gz'), index_col=0)
+    fitbit_df = pd.read_csv(Path.joinpath(Path.resolve(data_directory), 'processed', 'fitbit', id + '.csv.gz'), index_col=0)
     return fitbit_df
 
 

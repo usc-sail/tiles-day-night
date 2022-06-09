@@ -1,0 +1,22 @@
+            Df  Sum Sq Mean Sq F value Pr(>F)    
+shift        1 2951782 2951782 274.110 <2e-16 ***
+age          1      27      27   0.002  0.960    
+gender       1    5872    5872   0.545  0.462    
+Residuals   85  915332   10769                   
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+17 observations deleted due to missingness
+ shift   emmean       SE df lower.CL upper.CL
+ day    52.4957 16.51131 85  14.8202  90.1712
+ night 424.9670 18.39904 85 382.9841 466.9500
+
+Results are averaged over the levels of: age, gender 
+Confidence level used: 0.95 
+Conf-level adjustment: bonferroni method for 2 estimates 
+The ANOVA (formula: mid ~ shift + age + gender) suggests that:
+
+  - The main effect of shift is significant and large (F(1, 85) = 274.11, p < .001; Eta2 (partial) = 0.76, 90% CI [0.69, 0.81])
+  - The main effect of age is not significant and very small (F(1, 85) = 2.50e-03, p = 0.960; Eta2 (partial) = 2.94e-05, 90% CI [0.00, 0.00])
+  - The main effect of gender is not significant and very small (F(1, 85) = 0.55, p = 0.462; Eta2 (partial) = 6.37e-03, 90% CI [0.00, 0.06])
+
+Effect sizes were labelled following Field's (2013) recommendations.

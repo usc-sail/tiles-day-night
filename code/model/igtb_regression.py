@@ -64,45 +64,56 @@ def print_latex(data_df, feat_cols):
                  'psqi_subject_quality': 'Subject Quality',
                  'psqi_sleep_latency': 'Sleep Latency', 'psqi_sleep_duration': 'Sleep Duration',
                  'psqi_sleep_efficiency': 'Sleep Efficiency', 'psqi_sleep_disturbance': 'Sleep Disturbance',
-                 'psqi_sleep_medication': 'Sleep Medication', 'psqi_day_dysfunction': 'Day-time Dysfunction' }
+                 'psqi_sleep_medication': 'Sleep Medication', 'psqi_day_dysfunction': 'Day Dysfunc.' }
 
 
     for col in igtb_cols:
-
         adj_r = data_df.loc[col, 'adj_r_2']
         r_p_val = data_df.loc[col, 'f_pval']
 
         print()
-        print('\multicolumn{1}{l|}{\\textbf{%s}} &' % igtb_dict[col])
-        if r_p_val < 0.01:
-            print('\multicolumn{1}{c|}{$\mathbf{%.3f^{**}}$} &' % adj_r)
-        elif r_p_val < 0.05:
-            print('\multicolumn{1}{c|}{$\mathbf{%.3f^*}$} &' % adj_r)
-        elif r_p_val < 0.10:
-            print('\multicolumn{1}{c|}{$\mathbf{%.3f^\dagger}$} &' % adj_r)
+        if 'psqi_' in col:
+            print('\multicolumn{1}{l}{\\hspace{0.15cm}\\textbf{%s}} &' % igtb_dict[col])
         else:
-            print('\multicolumn{1}{c|}{$%.3f$} &' % adj_r)
+            print('\multicolumn{1}{l}{\\textbf{%s}} &' % igtb_dict[col])
+        if r_p_val < 0.01:
+            print('\multicolumn{1}{c}{$\mathbf{%.3f^{**}}$} &' % adj_r)
+            print('\multicolumn{1}{c}{$\mathbf{%.3f^{**}}$} &' % r_p_val)
+        elif r_p_val < 0.05:
+            print('\multicolumn{1}{c}{$\mathbf{%.3f^*}$} &' % adj_r)
+            print('\multicolumn{1}{c}{$\mathbf{%.3f^*}$} &' % r_p_val)
+        elif r_p_val < 0.10:
+            print('\multicolumn{1}{c}{$\mathbf{%.3f^\dagger}$} &' % adj_r)
+            print('\multicolumn{1}{c}{$\mathbf{%.3f^\dagger}$} &' % r_p_val)
+        else:
+            print('\multicolumn{1}{c}{$%.3f$} &' % adj_r)
+            print('\multicolumn{1}{c}{$%.3f$} &' % r_p_val)
 
         for i, feat_col in enumerate(feat_cols):
             param = data_df.loc[col, feat_col + '_param']
             p = data_df.loc[col, feat_col + '_p']
 
-            vline = '|' if i != len(feat_cols) - 1 else ''
+            # vline = '|' if i != len(feat_cols) - 1 else ''
+            vline = ''
             end_str = '&' if i != len(feat_cols) - 1 else '\\rule{0pt}{1.75ex} \\\\'
             if p < 0.01:
-                print('\multicolumn{1}{c%s}{$\mathbf{%.3f^{**}}$} %s' % (vline, param, end_str))
+                print('\multicolumn{1}{c%s}{$\mathbf{%.2f}$} &' % (vline, param))
+                print('\multicolumn{1}{c%s}{$\mathbf{%.3f^{**}}$} %s' % (vline, p, end_str))
             elif p < 0.05:
-                print('\multicolumn{1}{c%s}{$\mathbf{%.3f^*}$} %s' % (vline, param, end_str))
+                print('\multicolumn{1}{c%s}{$\mathbf{%.2f}$} &' % (vline, param))
+                print('\multicolumn{1}{c%s}{$\mathbf{%.3f^*}$} %s' % (vline, p, end_str))
             elif p < 0.10:
-                print('\multicolumn{1}{c%s}{$\mathbf{%.3f^\dagger}$} %s' % (vline, param, end_str))
+                print('\multicolumn{1}{c%s}{$\mathbf{%.2f}$} &' % (vline, param))
+                print('\multicolumn{1}{c%s}{$\mathbf{%.3f^\dagger}$} %s' % (vline, p, end_str))
             else:
-                print('\multicolumn{1}{c%s}{$%.3f$} %s' % (vline, param, end_str))
+                print('\multicolumn{1}{c%s}{$%.2f$} &' % (vline, param))
+                print('\multicolumn{1}{c%s}{$%.3f$} %s' % (vline, p, end_str))
 
 
 if __name__ == '__main__':
     # Read ground truth data
     bucket_str = 'tiles-phase1-opendataset'
-    root_data_path = Path(__file__).parent.absolute().parents[1].joinpath('data', bucket_str)
+    root_data_path = Path('/Volumes/Tiles/').joinpath(bucket_str)
 
     igtb_df = read_AllBasic(root_data_path)
     psqi_raw_igtb = read_PSQI_Raw(root_data_path)

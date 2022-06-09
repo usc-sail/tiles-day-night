@@ -7,20 +7,37 @@ import matplotlib.pyplot as plt
 
 
 def plot_sleep(plt_df_list, title, shift='day'):
-    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 2.75))
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 3.25))
     color = ['blue', 'g']
 
     for i in range(len(axes.flatten())):
 
         sns.set_style("white")
-        sns.distplot(np.array(plt_df_list[i]['start']), norm_hist=True, hist=False, kde=True,
-                     ax=axes[i], color=color[0], kde_kws={'shade': True, 'linewidth': 1, 'alpha': 0.3})
+        sns.distplot(np.array(plt_df_list[i]['start'].dropna()), norm_hist=True, hist=True, kde=False, bins=np.arange(0, 24, 0.5),
+                     ax=axes[i], color=color[0], kde_kws={'shade': True, 'linewidth': 1, 'alpha': 0.3, 'bw_adjust': 0.5})
 
-        sns.distplot(np.array(plt_df_list[i]['end']), norm_hist=True, hist=False, kde=True,
-                     ax=axes[i], color=color[1], kde_kws={'shade': True, 'linewidth': 1, 'alpha': 0.3})
+        sns.distplot(np.array(plt_df_list[i]['end'].dropna()), norm_hist=True, hist=True, kde=False, bins=np.arange(0, 24, 0.5),
+                     ax=axes[i], color=color[1], kde_kws={'shade': True, 'linewidth': 1, 'alpha': 0.3, 'bw_adjust': 0.5})
+
+        print('Shift %s' % (shift))
+
+        sleep_array = []
+        for data in np.array(plt_df_list[i]['start']):
+            if data >= 12:
+                sleep_array.append(data - 24)
+            else:
+                sleep_array.append(data)
+        # print('sleep time %.2f, %.2f' % (np.nanmean(plt_df_list[i]['start']), np.std(plt_df_list[i]['start'])))
+        # print('wake time %.2f, %.2f' % (np.nanmean(plt_df_list[i]['end']), np.std(plt_df_list[i]['end'])))
+        # print('wake time %.2f, %.2f' % (np.nanmean(sleep_array), np.nanstd(sleep_array)))
+
+        print('sleep time %.2f, %.2f, %.2f' % (np.nanmean(plt_df_list[i]['start']), np.nanmin(plt_df_list[i]['start']), np.nanmax(plt_df_list[i]['start'])))
+        # print('wake time %.2f, %.2f, %.2f' % (np.nanmean(plt_df_list[i]['end']), np.nanmin(plt_df_list[i]['end']), np.nanmax(plt_df_list[i]['end'])))
+        print('wake time %.2f, %.2f, %.2f' % (np.nanmean(sleep_array), np.nanmin(sleep_array) + 24, np.nanmax(sleep_array)))
+        print()
 
         axes[i].set_xlim([0, 24])
-        axes[i].set_ylim([0, 0.5])
+        axes[i].set_ylim([0, 0.9])
         axes[i].set_xlabel('Time in a Day (hour)', fontsize=13, fontweight='bold')
         axes[i].set_title('Day Sleep')
 
@@ -50,7 +67,7 @@ def plot_sleep(plt_df_list, title, shift='day'):
 if __name__ == '__main__':
     # Read ground truth data
     bucket_str = 'tiles-phase1-opendataset'
-    root_data_path = Path(__file__).parent.absolute().parents[1].joinpath('data', bucket_str)
+    root_data_path = Path('/Volumes/Tiles/').joinpath(bucket_str)
 
     # read ground-truth data
     igtb_df = read_AllBasic(root_data_path)
@@ -73,10 +90,10 @@ if __name__ == '__main__':
     night_sleep_off_df = night_sleep_df.loc[night_sleep_df['work'] == 'offday']
 
     plt_df_list = [day_sleep_work_df, day_sleep_off_df]
-    plot_sleep(plt_df_list, 'PDF of Sleep Start and End Time (Day Shift)', shift='day')
+    plot_sleep(plt_df_list, 'PDF of Median Sleep Start and End Time (Day Shift)', shift='day')
 
     plt_df_list = [night_sleep_work_df, night_sleep_off_df]
-    plot_sleep(plt_df_list, 'PDF of Sleep Start and End Time (Night Shift)', shift='night')
+    plot_sleep(plt_df_list, 'PDF of Median Sleep Start and End Time (Night Shift)', shift='night')
 
     print()
 

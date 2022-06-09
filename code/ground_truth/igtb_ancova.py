@@ -1,6 +1,8 @@
 from util.load_data_basic import *
 from scipy import stats
 from scipy.stats import skew
+from pingouin import ancova
+import statsmodels.api as sm
 
 
 col_dict = {'stai': 'Anxiety', 'pan_PosAffect': 'Positive Affect', 'pan_NegAffect': 'Negative Affect',
@@ -93,6 +95,31 @@ def print_latex(igtb_df, col, func=stats.kruskal, func_name='K-S', end_str='\\ru
     # print('\multicolumn{1}{c}{$%.1f$} %s' % (u_stats, end_str))
     print('\multicolumn{1}{c}{$%.2f$} %s' % (z, end_str))
     print()
+    
+
+def ancova_test(igtb_df, col):
+    result = ancova(data=igtb_df, dv=col, covar=['age', 'education', 'gender'], between='shift')
+    print()
+
+def multiple_regression(igtb_df, col):
+    data_df = igtb_df[[col]+['Age', 'Educ', 'Gender', 'shift', 'native_lang']]
+    data_df = data_df.dropna()
+
+    data_df['Age'] = pd.get_dummies(data_df['Age'], drop_first=True)
+    data_df['Educ'] = pd.get_dummies(data_df['Educ'], drop_first=True)
+    data_df['Gender'] = pd.get_dummies(data_df['Gender'], drop_first=True)
+    data_df['shift'] = pd.get_dummies(data_df['shift'], drop_first=True)
+    data_df['native_lang'] = pd.get_dummies(data_df['native_lang'], drop_first=True)
+
+    print(col)
+    X = data_df[['Age', 'Educ', 'Gender', 'shift', 'native_lang']]
+    X = sm.add_constant(X)
+
+    Y = data_df[col]
+    model = sm.OLS(Y, X).fit()
+    print(model.summary())
+
+    print()
 
 
 if __name__ == '__main__':
@@ -111,8 +138,29 @@ if __name__ == '__main__':
         shift_str = 'day' if shift == 'Day shift' else 'night'
         uid = list(igtb_df.loc[igtb_df['participant_id'] == participant_id].index)[0]
 
+        gender = igtb_df.loc[igtb_df['participant_id'] == participant_id].gender[0]
+        age = igtb_df.loc[igtb_df['participant_id'] == participant_id].age[0]
+        educ = igtb_df.loc[igtb_df['participant_id'] == participant_id].educ[0]
+        lang = igtb_df.loc[igtb_df['participant_id'] == participant_id].lang[0]
+
+        gender_str = 'Male' if gender == 1 else 'Female'
+        lang_str = 'Yes' if lang == 1 else 'No'
+
+        if age < 40:
+            igtb_df.loc[uid, 'Age'] = '< 40 Years'
+        else:
+            igtb_df.loc[uid, 'Age'] = '>= 40 Years'
+        igtb_df.loc[uid, 'Age'] = age
+
+        if educ == 'A' or educ == 'B':
+            igtb_df.loc[uid, 'Educ'] = 'Some college or College'
+        elif educ == 'C':
+            igtb_df.loc[uid, 'Educ'] = 'Graduate'
+
         igtb_df.loc[uid, 'job'] = job_str
         igtb_df.loc[uid, 'shift'] = shift_str
+        igtb_df.loc[uid, 'Gender'] = gender_str
+        igtb_df.loc[uid, 'native_lang'] = lang_str
 
         # Process physical activity survey
         sitting_on_weekdays = int(igtb_raw.loc[uid, 'ipaq26'])
@@ -143,6 +191,7 @@ if __name__ == '__main__':
         for col in list(psqi_raw_igtb.columns):
             igtb_df.loc[uid, col] = psqi_raw_igtb.loc[uid, col]
 
+    igtb_df = igtb_df.loc[igtb_df['job'] == 'nurse']
     psqi_col = ['sitting_weekday', 'sitting_weekend', 'walk_during_work', 'walk_during_off', 'psqi']
     psqi_col = psqi_col + list(psqi_raw_igtb.columns)
 
@@ -162,8 +211,8 @@ if __name__ == '__main__':
 
     # for col in psqi_col:
     for col in affect_cols:
-        print_latex(igtb_df, col, func=stats.mannwhitneyu)
-
+        # print_latex(igtb_df, col, func=stats.mannwhitneyu)
+        multiple_regression(igtb_df, col)
     print()
     # for col in affect_cols:
         # print_latex(igtb_df, col, func=stats.mannwhitneyu)

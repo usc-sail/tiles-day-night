@@ -22,8 +22,10 @@ def read_IGTB_Raw(data_directory):
 
 # Load IGTB data
 def read_IGTB(data_directory):
-    IGTB = pd.read_csv(Path.joinpath(data_directory, 'surveys', 'scored', 'baseline', 'part_one-abs_vocab_gats_audit_psqi_ipaq_iod_ocb_irb_itp_bfi_pan_stai.csv.gz'), index_col=1)
-    IGTB.index = pd.to_datetime(IGTB.index)
+    IGTB_part1 = pd.read_csv(Path.joinpath(data_directory, 'surveys', 'scored', 'baseline', 'part_one-abs_vocab_gats_audit_psqi_ipaq_iod_ocb_irb_itp_bfi_pan_stai.csv.gz'), index_col=1)
+    IGTB_part2 = pd.read_csv(Path.joinpath(data_directory, 'surveys', 'scored', 'baseline', 'part_two-rand_swls_pss_mpfi_waaq_uwes_pcq_chss.csv.gz'), index_col=1)
+
+    IGTB = pd.merge(IGTB_part1, IGTB_part2, left_on='participant_id', right_on='participant_id', how='outer')
 
     return IGTB
 
@@ -68,7 +70,7 @@ def read_Demographic(data_directory):
 
 # Load pre study data
 def read_pre_study_info(data_directory):
-    PreStudyInfo = pd.read_csv(os.path.join(data_directory, 'surveys', 'raw', 'demographics', 'part_two-demographics_timings.csv.gz'), index_col=3)
+    PreStudyInfo = pd.read_csv(Path.joinpath(data_directory, 'surveys', 'raw', 'demographics', 'part_two-demographics_timings.csv.gz'), index_col=3)
     PreStudyInfo.index = pd.to_datetime(PreStudyInfo.index)
 
     return PreStudyInfo
@@ -83,7 +85,7 @@ def read_AllBasic(data_directory):
     Demographic = read_Demographic(data_directory)
 
     # Read Pre-Study info
-    PreStudyInfo = read_pre_study_info(os.path.join(data_directory))
+    PreStudyInfo = read_pre_study_info(data_directory)
 
     # Read IGTB info
     IGTB = read_IGTB(data_directory)
@@ -132,8 +134,11 @@ def read_PSQI_Raw(data_directory):
         uid = list(IGTB.index)[i]
         participant_psqi_df = IGTB.iloc[i, :]
 
+        if uid == 'SG1074':
+            print()
+
         # Component 1
-        psqi_df.loc[uid, 'psqi_subject_quality'] = participant_psqi_df['psqi6']
+        psqi_df.loc[uid, 'psqi_subject_quality'] = float(participant_psqi_df['psqi9']) - 1
 
         # Component 2
         sleep_latency = float(participant_psqi_df['psqi2'])
@@ -153,11 +158,11 @@ def read_PSQI_Raw(data_directory):
         # Component 3
         sleep_duration = float(participant_psqi_df['psqi4'])
 
-        if sleep_duration > 7:
+        if sleep_duration >= 7:
             tmp_score = 0
-        elif 6 < sleep_duration <= 7:
+        elif 6 <= sleep_duration < 7:
             tmp_score = 1
-        elif 5 < sleep_duration <= 6:
+        elif 5 <= sleep_duration < 6:
             tmp_score = 2
         else:
             tmp_score = 3
@@ -167,17 +172,29 @@ def read_PSQI_Raw(data_directory):
         time1 = float(participant_psqi_df['psqi1'][:-2]) + float(participant_psqi_df['psqi1'][-2:]) / 60
         time2 = float(participant_psqi_df['psqi3'][:-2]) + float(participant_psqi_df['psqi3'][-2:]) / 60
 
-        if float(participant_psqi_df['psqi1ampm']) == float(participant_psqi_df['psqi3ampm']):
-            time_in_bed = time2 - time1
-        else:
-            time_in_bed = 12 - time1 + time2
+        if float(participant_psqi_df['psqi1ampm']) == 1200 and time1 != 12 and time1 != 12.5:
+            time1 = time1 + 12
+        if float(participant_psqi_df['psqi3ampm']) == 1200 and time2 != 12 and time1 != 12.5:
+            time2 = time2 + 12
+
+        if float(participant_psqi_df['psqi1ampm']) == 0 and (time1 == 12 or time1 == 12.5):
+            time1 = time1 + 12
+        if float(participant_psqi_df['psqi3ampm']) == 0 and (time2 == 12 or time2 == 12.5):
+            time2 = time2 + 12
+
+        # if float(participant_psqi_df['psqi1ampm']) == float(participant_psqi_df['psqi3ampm']):
+        #    time_in_bed = time2 - time1
+        # else:
+        time_in_bed = 24 - time1 + time2
+        if time_in_bed > 24:
+            time_in_bed = time_in_bed - 24
 
         sleep_effieciency = sleep_duration / time_in_bed
-        if sleep_effieciency > 0.85:
+        if sleep_effieciency >= 0.85:
             tmp_score = 0
-        elif 0.75 < sleep_effieciency <= 0.85:
+        elif 0.75 <= sleep_effieciency < 0.85:
             tmp_score = 1
-        elif 65 < sleep_effieciency <= 0.75:
+        elif 0.65 <= sleep_effieciency < 0.75:
             tmp_score = 2
         else:
             tmp_score = 3
@@ -189,13 +206,14 @@ def read_PSQI_Raw(data_directory):
         sleep_disturbance += float(participant_psqi_df['psqi5d']) + float(participant_psqi_df['psqi5e'])
         sleep_disturbance += float(participant_psqi_df['psqi5f']) + float(participant_psqi_df['psqi5g'])
         sleep_disturbance += float(participant_psqi_df['psqi5h']) + float(participant_psqi_df['psqi5i'])
-        sleep_disturbance = np.nansum(np.array([float(participant_psqi_df['psqi5jb']), sleep_disturbance]))
+        if str(participant_psqi_df['psqi5jb']) != 'nan':
+            sleep_disturbance = float(participant_psqi_df['psqi5jb']) + sleep_disturbance
 
         if sleep_disturbance < 1:
             tmp_score = 0
         elif 1 <= sleep_disturbance <= 9:
             tmp_score = 1
-        elif 10 <= sleep_disturbance <= 18:
+        elif 9 < sleep_disturbance <= 18:
             tmp_score = 2
         else:
             tmp_score = 3
@@ -203,10 +221,11 @@ def read_PSQI_Raw(data_directory):
         psqi_df.loc[uid, 'psqi_sleep_disturbance'] = tmp_score
 
         # Component 6
-        psqi_df.loc[uid, 'psqi_sleep_medication'] = int(participant_psqi_df['psqi7'])
+        psqi_df.loc[uid, 'psqi_sleep_medication'] = int(participant_psqi_df['psqi6'])
 
         # Component 7
-        tmp_score = float(participant_psqi_df['psqi8']) + float(participant_psqi_df['psqi9']) - 1
+        # tmp_score = float(participant_psqi_df['psqi8']) + float(participant_psqi_df['psqi9']) - 1
+        tmp_score = float(participant_psqi_df['psqi7']) + float(participant_psqi_df['psqi8'])
         component7_dict = {0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3}
         psqi_df.loc[uid, 'psqi_day_dysfunction'] = component7_dict[tmp_score]
 
@@ -215,7 +234,7 @@ def read_PSQI_Raw(data_directory):
     if Path.exists(Path.joinpath(Path.resolve(data_directory).parent, 'processed', 'survey')) is False:
         Path.mkdir(Path.joinpath(Path.resolve(data_directory).parent, 'processed', 'survey'))
 
-    psqi_df.to_csv(Path.joinpath(Path.resolve(data_directory).parent, 'processed', 'survey', 'psqi_raw.csv.gz'), compression='gzip')
+    # psqi_df.to_csv(Path.joinpath(Path.resolve(data_directory).parent, 'processed', 'survey', 'psqi_raw.csv.gz'), compression='gzip')
 
     return psqi_df
 

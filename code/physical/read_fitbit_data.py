@@ -223,7 +223,7 @@ if __name__ == '__main__':
                 tmp_day_df = day_df.loc[day_df['time'] == plot_list[time]]
                 tmp_night_df = night_df.loc[night_df['time'] == plot_list[time]]
 
-                stats_value, p = stats.kruskal(np.array(tmp_day_df.loc[tmp_day_df['type'] == col]['data']), np.array(tmp_night_df.loc[tmp_night_df['type'] == col]['data']))
+                stats_value, p = stats.mannwhitneyu(np.array(tmp_day_df.loc[tmp_day_df['type'] == col]['data']), np.array(tmp_night_df.loc[tmp_night_df['type'] == col]['data']))
                 x_tick_list[time] = x_tick_list[time] + '\n(p<0.01)' if p < 0.01 else x_tick_list[time] + '\n(p=' + str(p)[:4] + ')'
 
             axes[i].set_xlim([-0.25, 6 - 0.75])
