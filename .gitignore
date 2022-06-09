@@ -4,3 +4,4 @@ data/*
 *.gz
 *.csv
 .idea*
+.Rproj.user
