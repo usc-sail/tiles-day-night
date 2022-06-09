@@ -46,10 +46,6 @@ print_dict = {'r2': 'Adjust $R^2$',
               #'night*rest_off': 'Shift [Night shift] $\\times$ Rest Activity \% (Off-day)'}
 
 def mr_reg(nurse_df, igtb_col, index, feat_col):
-    # feat_cols = ['rest_work', 'step_ratio_work', 'rest_off', 'step_ratio_off',
-    #             'duration_work', 'duration_off', 'efficiency_work', 'efficiency_off']
-
-    # feat_cols = ['rest_off']
 
     # for col in feat_cols:
     data_df = nurse_df[[feat_col, 'less_than_40', 'female', 'day', 'night']+[igtb_col]]
@@ -57,9 +53,6 @@ def mr_reg(nurse_df, igtb_col, index, feat_col):
     # data_df = (data_df - data_df.mean()) / data_df.std()
     tmp_df = (data_df[[igtb_col, feat_col]] - data_df[[igtb_col, feat_col]].mean()) / data_df[[igtb_col, feat_col]].std()
     data_df.loc[list(tmp_df.index), [igtb_col, feat_col]] = tmp_df.loc[list(tmp_df.index), [igtb_col, feat_col]]
-    # data_df = sm.add_constant(data_df)
-
-    # model = ols(igtb_col + ' ~ less_than_40 + female + day + ' + feat_col + ' + day : ' + feat_col + ' + ' + 'night : ' + feat_col, data=data_df).fit()
     model = ols(igtb_col + ' ~ less_than_40 + female + day + ' + feat_col + ' + day : ' + feat_col, data=data_df).fit()
 
 
@@ -111,24 +104,6 @@ def mr_reg(nurse_df, igtb_col, index, feat_col):
         else:
             print('%.2f %s' % (model.params[param_idx+1], end_str))
 
-
-        '''
-        print('\multicolumn{1}{c}{%s} &' % (col_dict[col]))
-        if model.pvalues[2] < 0.01:
-            print('\multicolumn{1}{c}{$\mathbf{%.2f}^{**}$} &' % (model.params[2]))
-        elif model.pvalues[2] < 0.05:
-            print('\multicolumn{1}{c}{$\mathbf{%.2f}^{*}$} &' % (model.params[2]))
-        else:
-            print('\multicolumn{1}{c}{$%.2f$} &' % (model.params[2]))
-
-        if model.pvalues[3] < 0.01:
-            print('\multicolumn{1}{c}{$\mathbf{%.2f}^{**}$} \\rule{0pt}{2.25ex} \\\\' % (model.params[3]))
-        elif model.pvalues[3] < 0.05:
-            print('\multicolumn{1}{c}{$\mathbf{%.2f}^{*}$} \\rule{0pt}{2.25ex} \\\\' % (model.params[3]))
-        else:
-            print('\multicolumn{1}{c}{$%.2f$} \\rule{0pt}{2.25ex} \\\\' % (model.params[3]))
-        print()
-        '''
 
 
 if __name__ == '__main__':
@@ -187,9 +162,6 @@ if __name__ == '__main__':
                          'rest_off', 'vigorous_min_off', 'step_ratio_off',
                          'duration_work', 'duration_off', 'efficiency_work', 'efficiency_off']]
 
-    # Activity
-    # for col in ['psqi', 'swls', 'pan_PosAffect', 'pan_NegAffect', 'stai']:
-
     tmp_df = pd.get_dummies(nurse_df['shift'])
     for index in list(tmp_df.index):
         nurse_df.loc[index, 'day'] = tmp_df.loc[index, 'Day shift']
@@ -206,14 +178,7 @@ if __name__ == '__main__':
         # nurse_df.loc[index, 'female'] = tmp_df.loc[index, 'Male']
 
     feat_col = 'efficiency_work'
-
-    # feat_cols = ['rest_work', 'step_ratio_work', 'rest_off', 'step_ratio_off',
-    #             'duration_work', 'duration_off', 'efficiency_work', 'efficiency_off']
-
-    # for print_index in ['r2', 'age', 'gender', 'day', feat_col, 'day*'+feat_col, 'night*'+feat_col]:
-    # for print_index in ['intercept', 'age', 'gender', 'day', feat_col, 'day*' + feat_col, 'night*'+feat_col, 'observation', 'r2']:
     for print_index in ['intercept', 'age', 'gender', 'day', feat_col, 'day*' + feat_col, 'observation', 'r2']:
-        # for col in ['swls', 'stai', 'pan_PosAffect', 'pan_NegAffect']:
         if print_index == 'observation':
             print('\\midrule')
 
