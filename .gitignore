@@ -1,5 +1,4 @@
 data/*
-*.png
 *.pyc
 *.gz
 *.csv
