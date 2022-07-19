@@ -42,8 +42,6 @@ if __name__ == '__main__':
     root_data_path = Path('/Volumes/Tiles/').joinpath(bucket_str)
 
     igtb_df = read_AllBasic(root_data_path)
-    psqi_raw_igtb = read_PSQI_Raw(root_data_path)
-    igtb_raw = read_IGTB_Raw(root_data_path)
 
     for participant_id in list(igtb_df.participant_id):
         nurse = str(igtb_df.loc[igtb_df['participant_id'] == participant_id].currentposition[0])
@@ -63,41 +61,11 @@ if __name__ == '__main__':
         uid = list(igtb_df.loc[igtb_df['participant_id'] == participant_id].index)[0]
 
 
-        if age < 40:
-            igtb_df.loc[uid, 'Age'] = '< 40 Years'
-        else:
-            igtb_df.loc[uid, 'Age'] = '>= 40 Years'
+        if age < 40: igtb_df.loc[uid, 'Age'] = '< 40 Years'
+        else: igtb_df.loc[uid, 'Age'] = '>= 40 Years'
 
-        if educ == 'A' or educ == 'B':
-            igtb_df.loc[uid, 'Educ'] = 'Some college or College'
-        elif educ == 'C':
-            igtb_df.loc[uid, 'Educ'] = 'Graduate'
-
-        # Process physical activity survey
-        sitting_on_weekdays = int(igtb_raw.loc[uid, 'ipaq26'])
-        if sitting_on_weekdays < 10 or sitting_on_weekdays == 999:
-            sitting_on_weekdays = np.nan
-
-        sitting_on_weekend = int(igtb_raw.loc[uid, 'ipaq27'])
-        if sitting_on_weekend < 10 or sitting_on_weekend == 999:
-            sitting_on_weekend = np.nan
-
-        walk_during_work = str(igtb_raw.loc[uid, 'ipaq7'])
-        if walk_during_work == 'nan':
-            walk_during_work = 0
-        if int(walk_during_work) < 10 or int(walk_during_work) == 999:
-            walk_during_work = np.nan
-
-        walk_during_off = str(igtb_raw.loc[uid, 'ipaq21'])
-        if walk_during_off == 'nan':
-            walk_during_off = 0
-        if int(walk_during_off) < 10 or int(walk_during_off) == 999:
-            walk_during_off = np.nan
-
-        igtb_df.loc[uid, 'walk_during_work'] = float(walk_during_work)
-        igtb_df.loc[uid, 'walk_during_off'] = float(walk_during_off)
-        igtb_df.loc[uid, 'sitting_weekday'] = sitting_on_weekdays
-        igtb_df.loc[uid, 'sitting_weekend'] = sitting_on_weekend
+        if educ == 'A' or educ == 'B': igtb_df.loc[uid, 'Educ'] = 'Some college or College'
+        elif educ == 'C': igtb_df.loc[uid, 'Educ'] = 'Graduate'
 
         igtb_df.loc[uid, 'job'] = job_str
         igtb_df.loc[uid, 'Gender'] = gender_str
@@ -114,11 +82,8 @@ if __name__ == '__main__':
     night_df = nurse_df.loc[nurse_df['Shift'] == 'Night shift']
 
     affect_cols = ['pan_NegAffect', 'swls', 'psqi']
-
-    affect_cols = ['stai', 'pan_PosAffect', 'pan_NegAffect', 'swls',
-                   'bfi_Neuroticism', 'bfi_Conscientiousness', 'bfi_Extraversion', 'bfi_Agreeableness', 'bfi_Openness', 'psqi']
+    affect_cols = ['stai', 'pan_PosAffect', 'pan_NegAffect', 'swls', 'bfi_Neuroticism', 'bfi_Conscientiousness', 'bfi_Extraversion', 'bfi_Agreeableness', 'bfi_Openness', 'psqi']
     nurse_df.to_csv('igtb.csv.gz')
 
     for col in affect_cols:
-        # for demo in ['Age', 'Gender', 'native_lang', 'Educ']:
         anova(nurse_df, col=col, factor1='Age', factor2='Gender')
