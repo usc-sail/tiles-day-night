@@ -70,43 +70,20 @@ def print_latex_all(all_df, first_df, second_df, demo, demo_option, print_col, e
         # lm = ols(demo + ' ~ Shift', data=all_df).fit()
         # result = sm.stats.anova_lm(lm, typ=2)  # Type 2 ANOVA DataFrame
 
-        if demo == 'age':
-            a = 1
-
-        '''
-        u = result['U-val'].values[0]
-        p = result['p-val'].values[0]
-        es = result['CLES'].values[0]
-        t = result['T'].values[0]
-        
-        dof1 = result['ddof1'].values[0]
-        dof2 = result['ddof2'].values[0]
-
-        p = result['p-unc'].values[0]
-
-        '''
-
         p = result['p-val'].values[0]
         t = result['T'].values[0]
         df = result['dof'].values[0]
 
-        # p = result.loc['Shift', 'PR(>F)']
-        # F = result.loc['Shift', 'F']
-        # df = result.loc['Residual', 'df']
 
         stats_df['p'] = p
         stats_df['T'] = t
         stats_df['df'] = df
 
-        if p < 0.01:
-            print('\multicolumn{1}{c}{$\mathbf{%.3f^{**}}$} \\rule{0pt}{2.25ex} \\\\' % (p))
-        elif p < 0.05:
-            print('\multicolumn{1}{c}{$\mathbf{%.3f^*}$} \\rule{0pt}{2.25ex} \\\\' % (p))
-        else:
-            print('\multicolumn{1}{c}{$%.3f$} \\rule{0pt}{2.25ex} \\\\' % (p))
+        if p < 0.01: print('\multicolumn{1}{c}{$\mathbf{%.3f^{**}}$} \\rule{0pt}{2.25ex} \\\\' % (p))
+        elif p < 0.05: print('\multicolumn{1}{c}{$\mathbf{%.3f^*}$} \\rule{0pt}{2.25ex} \\\\' % (p))
+        else: print('\multicolumn{1}{c}{$%.3f$} \\rule{0pt}{2.25ex} \\\\' % (p))
 
-    if end == True:
-        print('\\hline')
+    if end == True: print('\\hline')
     print()
     return stats_df
 
