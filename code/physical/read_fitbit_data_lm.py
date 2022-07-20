@@ -20,7 +20,7 @@ def process_fitbit(fitbit_df, timeline_df, maximum_hr, resting_hr, shift='day'):
         fitbit_day_df = fitbit_df[start_day_str:end_day_str]
         fitbit_day_df = fitbit_day_df.dropna()
 
-        # have 60% of the data
+        # have 60% of the data, otherwise skip
         if len(fitbit_day_df) < 1440 * 0.6:
             continue
 

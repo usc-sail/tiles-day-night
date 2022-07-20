@@ -22,17 +22,13 @@ if __name__ == '__main__':
 
         shift = 'day' if nurse_df.loc[nurse_df['participant_id'] == id].Shift[0] == 'Day shift' else 'night'
         sleep_metadata_df = read_sleep_data(root_data_path, id)
-        if sleep_metadata_df is None:
-            continue
-
+        if sleep_metadata_df is None: continue
         print('Process participant: %s' % (id))
-        if Path.exists(Path.cwd().joinpath('..', '..', '..', 'data', 'processed', 'timeline', id + '.csv.gz')) is False:
-            continue
+        if Path.exists(Path.cwd().joinpath('..', '..', '..', 'data', 'processed', 'timeline', id + '.csv.gz')) is False: continue
         timeline_df = pd.read_csv(Path.cwd().joinpath('..', '..', '..', 'data', 'processed', 'timeline', id + '.csv.gz'), index_col=0)
         main_sleep_df = sleep_metadata_df.loc[sleep_metadata_df['isMainSleep'] == True]
 
-        if len(main_sleep_df) == 0:
-            continue
+        if len(main_sleep_df) == 0: continue
 
         sleep_df = pd.DataFrame(index=[id])
 

@@ -211,6 +211,7 @@ if __name__ == '__main__':
     if Path.exists(Path.joinpath(Path.cwd(), 'sleep1.csv.gz')) is False:
         for id in id_list:
 
+            # read data
             shift = 'day' if nurse_df.loc[nurse_df['participant_id'] == id].Shift[0] == 'Day shift' else 'night'
             lang = nurse_df.loc[nurse_df['participant_id'] == id].lang[0]
             sleep_metadata_df = read_sleep_data(root_data_path, id)
@@ -229,22 +230,19 @@ if __name__ == '__main__':
             gender_str = 'Male' if gender == 1 else 'Female'
             age_str = '< 40 Years' if age < 40 else '>= 40 Years'
 
-            if sleep_metadata_df is None:
-                continue
+            # no sleep meta data skip
+            if sleep_metadata_df is None: continue
 
             print('Process participant: %s' % (id))
-            if Path.exists(Path.cwd().joinpath('..', '..', '..', 'data', 'processed', 'timeline', id + '.csv.gz')) is False:
-                continue
+            if Path.exists(Path.cwd().joinpath('..', '..', '..', 'data', 'processed', 'timeline', id + '.csv.gz')) is False: continue
             timeline_df = pd.read_csv(Path.cwd().joinpath('..', '..', '..', 'data', 'processed', 'timeline', id + '.csv.gz'), index_col=0)
             main_sleep_df = sleep_metadata_df.loc[sleep_metadata_df['isMainSleep'] == True]
 
-            if len(main_sleep_df) == 0:
-                continue
-
+            # no main sleep data, skip
+            if len(main_sleep_df) == 0: continue
             sleep_df = process_main_sleep(main_sleep_df, timeline_df, realizd_df)
 
-            if len(sleep_df) == 0:
-                continue
+            if len(sleep_df) == 0:  continue
             workday_sleep = sleep_df.loc[sleep_df['work'] == 1]
             offday_sleep = sleep_df.loc[sleep_df['work'] == 0]
 
@@ -253,8 +251,7 @@ if __name__ == '__main__':
             tmp_df = tmp_df.append(return_sleep_stats(workday_sleep, lang=lang, shift=shift, work='workday'))
             tmp_df = tmp_df.append(return_sleep_stats(offday_sleep, lang=lang, shift=shift, work='offday'))
 
-            if len(tmp_df) == 0:
-                continue
+            if len(tmp_df) == 0: continue
             tmp_df.loc[:, 'id'] = id
             tmp_df.loc[:, 'age'] = age_str
             tmp_df.loc[:, 'gender'] = gender_str

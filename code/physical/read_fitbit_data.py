@@ -62,20 +62,11 @@ def process_fitbit(fitbit_df, timeline_df, maximum_hr, resting_hr, shift='day'):
             if len(reg_df) > 120:
                 # offset comparing to 11pm, for day/night shift nurses it starts at 7am/7pm
                 offset = day_map[j] if shift == 'day' else night_map[j]
-                # row_df['rest_' + str(offset)] = np.nanmean((0.5 * maximum_hr > np.array(reg_df['heart_rate'])))
-                # row_df['moderate_'+str(offset)] = np.nanmean((0.5 * maximum_hr <= np.array(reg_df['heart_rate'])) & (np.array(reg_df['heart_rate']) < 0.64 * maximum_hr))
-                # row_df['vigorous_'+str(offset)] = np.nanmean((0.64 * maximum_hr <= np.array(reg_df['heart_rate'])) & (np.array(reg_df['heart_rate']) < 0.93 * maximum_hr))
-                # row_df['intense_'+str(offset)] = np.nanmean((0.77 * maximum_hr <= np.array(reg_df['heart_rate'])))
-
                 row_df['rest_' + str(offset)] = np.nanmean((0.5 * maximum_hr > np.array(reg_df['heart_rate'])))
                 row_df['moderate_' + str(offset)] = np.nanmean((0.5 * maximum_hr <= np.array(reg_df['heart_rate'])) & (np.array(reg_df['heart_rate']) < 0.7 * maximum_hr))
                 row_df['vigorous_' + str(offset)] = np.nanmean((0.7 * maximum_hr <= np.array(reg_df['heart_rate'])) & (np.array(reg_df['heart_rate']) < 0.85 * maximum_hr))
                 row_df['intense_' + str(offset)] = np.nanmean((0.85 * maximum_hr <= np.array(reg_df['heart_rate'])))
 
-                # row_df['rest_' + str(offset)] = np.nanmean(((0.4 * hr_reserve + resting_hr) > np.array(reg_df['heart_rate'])))
-                # row_df['moderate_' + str(offset)] = np.nanmean(((0.4 * hr_reserve + resting_hr) <= np.array(reg_df['heart_rate'])) & (np.array(reg_df['heart_rate']) < (0.6 * hr_reserve + resting_hr)))
-                # row_df['vigorous_' + str(offset)] = np.nanmean(((0.6 * hr_reserve + resting_hr) <= np.array(reg_df['heart_rate'])) & (np.array(reg_df['heart_rate']) < (0.85 * hr_reserve + resting_hr)))
-                # row_df['intense_' + str(offset)] = np.nanmean(((0.85 * hr_reserve + resting_hr) <= np.array(reg_df['heart_rate'])))
 
                 row_df['step_'+str(offset)] = np.nanmean(reg_df['StepCount'])
         daily_stats_df = daily_stats_df.append(row_df)
@@ -84,11 +75,10 @@ def process_fitbit(fitbit_df, timeline_df, maximum_hr, resting_hr, shift='day'):
 
     save_cols = list(workday_stats_df.columns)
 
+    # we only keep analyses with 10 data per participant
     workday_sum_df, offday_sum_df = pd.DataFrame(), pd.DataFrame()
-    if len(workday_stats_df) > 10:
-        workday_sum_df = pd.DataFrame(index=[id], columns=save_cols, data=np.nanmean(workday_stats_df, axis=0).reshape(1, len(save_cols)))
-    if len(offday_stats_df) > 10:
-        offday_sum_df = pd.DataFrame(index=[id], columns=save_cols, data=np.nanmean(offday_stats_df, axis=0).reshape(1, len(save_cols)))
+    if len(workday_stats_df) > 10: workday_sum_df = pd.DataFrame(index=[id], columns=save_cols, data=np.nanmean(workday_stats_df, axis=0).reshape(1, len(save_cols)))
+    if len(offday_stats_df) > 10: offday_sum_df = pd.DataFrame(index=[id], columns=save_cols, data=np.nanmean(offday_stats_df, axis=0).reshape(1, len(save_cols)))
 
     daily_sum_df = pd.DataFrame(index=[id], columns=save_cols, data=np.nanmean(daily_stats_df, axis=0).reshape(1, len(save_cols)))
     daily_sum_df['work'] = 0.5
@@ -99,8 +89,6 @@ def process_fitbit(fitbit_df, timeline_df, maximum_hr, resting_hr, shift='day'):
 def print_stats(sleep_df, col, func=stats.kruskal, func_name='K-S'):
     day_nurse_df = sleep_df.loc[sleep_df['shift'] == 'day']
     night_nurse_df = sleep_df.loc[sleep_df['shift'] == 'night']
-    # day_nurse_df = sleep_df.loc[sleep_df['work'] == 'workday']
-    # night_nurse_df = sleep_df.loc[sleep_df['work'] == 'offday']
 
     print(col)
     print('Number of valid participant: day: %i; night: %i\n' % (len(day_nurse_df[col].dropna()), len(night_nurse_df[col].dropna())))
@@ -139,8 +127,7 @@ if __name__ == '__main__':
             fitbit_df = read_prossed_fitbit_data(root_data_path.joinpath(bucket_str), id)
             summary_df = read_fitbit_daily_data(root_data_path.joinpath(bucket_str), id)
 
-            if fitbit_df is None:
-                continue
+            if fitbit_df is None: continue
 
             # heart rate basic
             maximum_hr = 220 - age
@@ -229,10 +216,8 @@ if __name__ == '__main__':
             axes[i].set_xlim([-0.25, 6 - 0.75])
             axes[i].set_xlabel('')
 
-            if col == 'step':
-                axes[i].set_ylabel('Step Count')
-            else:
-                axes[i].set_ylabel('')
+            if col == 'step': axes[i].set_ylabel('Step Count')
+            else: axes[i].set_ylabel('')
             axes[0].set_title('Workday', fontdict={'fontweight': 'bold', 'fontsize': 12})
             axes[1].set_title('Off-day', fontdict={'fontweight': 'bold', 'fontsize': 12})
 

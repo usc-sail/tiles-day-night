@@ -28,8 +28,6 @@ if __name__ == '__main__':
 
     # Read all igtb
     igtb_df = read_AllBasic(root_data_path)
-    psqi_raw_igtb = read_PSQI_Raw(root_data_path)
-    igtb_raw = read_IGTB_Raw(root_data_path)
     days_at_work_df = read_days_at_work(root_data_path)
 
     nurse_df = return_nurse_df(igtb_df)
@@ -81,10 +79,8 @@ if __name__ == '__main__':
             row_df = pd.DataFrame(index=[start_str])
             row_df['start'] = start_str
             row_df['end'] = end_str
-            if len(tmp_om_df) != 0 or len(tmp_owl_df) != 0 or ema_work is True:
-                row_df['work'] = 1
-            else:
-                row_df['work'] = 0
+            if len(tmp_om_df) != 0 or len(tmp_owl_df) != 0 or ema_work is True: row_df['work'] = 1
+            else: row_df['work'] = 0
             save_df = save_df.append(row_df)
 
         save_path = Path(__file__).parent.absolute().parents[1].joinpath('data')
