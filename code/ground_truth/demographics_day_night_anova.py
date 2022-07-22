@@ -41,7 +41,11 @@ if __name__ == '__main__':
     bucket_str = 'tiles-phase1-opendataset'
     root_data_path = Path('/Volumes/Tiles/').joinpath(bucket_str)
 
-    igtb_df = read_AllBasic(root_data_path)
+    # please contact the author to access: igtb_day_night.csv.gz
+    if Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz').exists() == False:
+        igtb_df = read_AllBasic(root_data_path)
+        igtb_df.to_csv(Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz'))
+    igtb_df = pd.read_csv(Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz'), index_col=0)
 
     for participant_id in list(igtb_df.participant_id):
         nurse = str(igtb_df.loc[igtb_df['participant_id'] == participant_id].currentposition[0])
@@ -83,7 +87,6 @@ if __name__ == '__main__':
 
     affect_cols = ['pan_NegAffect', 'swls', 'psqi']
     affect_cols = ['stai', 'pan_PosAffect', 'pan_NegAffect', 'swls', 'bfi_Neuroticism', 'bfi_Conscientiousness', 'bfi_Extraversion', 'bfi_Agreeableness', 'bfi_Openness', 'psqi']
-    nurse_df.to_csv('igtb.csv.gz')
 
     for col in affect_cols:
         anova(nurse_df, col=col, factor1='Age', factor2='Gender')

@@ -70,7 +70,11 @@ if __name__ == '__main__':
     root_data_path = Path('/Volumes/Tiles/').joinpath(bucket_str)
 
     # read ground-truth data
-    igtb_df = read_AllBasic(root_data_path)
+    # please contact the author to access: igtb_day_night.csv.gz
+    if Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz').exists() == False:
+        igtb_df = read_AllBasic(root_data_path)
+        igtb_df.to_csv(Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz'))
+    igtb_df = pd.read_csv(Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz'), index_col=0)
     days_at_work_df = read_days_at_work(root_data_path)
 
     nurse_df = return_nurse_df(igtb_df)

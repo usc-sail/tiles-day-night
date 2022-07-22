@@ -75,9 +75,11 @@ if __name__ == '__main__':
     root_data_path = Path('/Volumes/Tiles/').joinpath(bucket_str)
 
     # Read demographics, igtb, etc.
-    igtb_df = read_AllBasic(root_data_path)
-    psqi_raw_igtb = read_PSQI_Raw(root_data_path)
-    igtb_raw = read_IGTB_Raw(root_data_path)
+    # please contact the author to access: igtb_day_night.csv.gz
+    if Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz').exists() == False:
+        igtb_df = read_AllBasic(root_data_path)
+        igtb_df.to_csv(Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz'))
+    igtb_df = pd.read_csv(Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz'), index_col=0)
 
     nurse_df = return_nurse_df(igtb_df)
     nurse_id = list(nurse_df.participant_id)
@@ -110,10 +112,6 @@ if __name__ == '__main__':
         mgt_df = pd.read_csv(Path.cwd().joinpath('mgt_lm.csv.gz'), index_col=0)
 
     mgt_df = mgt_df.dropna()
-    # data = sm.datasets.get_rdataset("dietox", "geepack").data
-    # md = smf.mixedlm("anxiety ~ work + shift + work:shift", mgt_df, groups=mgt_df["id"])
-    # mdf = md.fit()
-    # print(mdf.summary())
     md = smf.mixedlm("pand_NegAffect ~ shift*work", mgt_df, groups=mgt_df["id"])
     mdf = md.fit()
     print(mdf.summary())
@@ -125,23 +123,3 @@ if __name__ == '__main__':
     md = smf.mixedlm("anxiety ~ shift*work", mgt_df, groups=mgt_df["id"])
     mdf = md.fit()
     print(mdf.summary())
-
-    '''
-    
-
-    md = smf.mixedlm("pand_NegAffect ~ stressd + shift", mgt_df, re_formula="stressd", groups=mgt_df["id"])
-    mdf = md.fit()
-    print(mdf.summary())
-
-    md = smf.mixedlm("anxiety ~ stressd + shift", mgt_df, re_formula="stressd", groups=mgt_df["id"])
-    mdf = md.fit()
-    print(mdf.summary())
-
-    md = smf.mixedlm("anxiety ~ pand_PosAffect + shift", mgt_df, re_formula="pand_PosAffect", groups=mgt_df["id"])
-    mdf = md.fit()
-    print(mdf.summary())
-
-    md = smf.mixedlm("anxiety ~ pand_NegAffect + shift", mgt_df, re_formula="pand_NegAffect", groups=mgt_df["id"])
-    mdf = md.fit()
-    print(mdf.summary())
-    '''

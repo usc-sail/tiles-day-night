@@ -109,7 +109,11 @@ if __name__ == '__main__':
     root_data_path = Path(__file__).parent.absolute().parents[1].joinpath('data')
 
     # read ground-truth data
-    igtb_df = read_AllBasic(root_data_path.joinpath(bucket_str))
+    # please contact the author to access: igtb_day_night.csv.gz
+    if Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz').exists() == False:
+        igtb_df = read_AllBasic(root_data_path)
+        igtb_df.to_csv(Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz'))
+    igtb_df = pd.read_csv(Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz'), index_col=0)
     nurse_df = return_nurse_df(igtb_df)
 
     id_list = list(nurse_df['participant_id'])

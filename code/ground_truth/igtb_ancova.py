@@ -127,9 +127,11 @@ if __name__ == '__main__':
     bucket_str = 'tiles-phase1-opendataset'
     root_data_path = Path('/Volumes/Tiles/').joinpath(bucket_str)
 
-    igtb_df = read_AllBasic(root_data_path)
-    psqi_raw_igtb = read_PSQI_Raw(root_data_path)
-    igtb_raw = read_IGTB_Raw(root_data_path)
+    # please contact the author to access: igtb_day_night.csv.gz
+    if Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz').exists() == False:
+        igtb_df = read_AllBasic(root_data_path)
+        igtb_df.to_csv(Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz'))
+    igtb_df = pd.read_csv(Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz'), index_col=0)
 
     for participant_id in list(igtb_df.participant_id):
         nurse = str(igtb_df.loc[igtb_df['participant_id'] == participant_id].currentposition[0])
@@ -162,57 +164,15 @@ if __name__ == '__main__':
         igtb_df.loc[uid, 'Gender'] = gender_str
         igtb_df.loc[uid, 'native_lang'] = lang_str
 
-        # Process physical activity survey
-        sitting_on_weekdays = int(igtb_raw.loc[uid, 'ipaq26'])
-        if sitting_on_weekdays < 10 or sitting_on_weekdays == 999:
-            sitting_on_weekdays = np.nan
-
-        sitting_on_weekend = int(igtb_raw.loc[uid, 'ipaq27'])
-        if sitting_on_weekend < 10 or sitting_on_weekend == 999:
-            sitting_on_weekend = np.nan
-
-        walk_during_work = str(igtb_raw.loc[uid, 'ipaq7'])
-        if walk_during_work == 'nan':
-            walk_during_work = 0
-        if int(walk_during_work) < 10 or int(walk_during_work) == 999:
-            walk_during_work = np.nan
-
-        walk_during_off = str(igtb_raw.loc[uid, 'ipaq21'])
-        if walk_during_off == 'nan':
-            walk_during_off = 0
-        if int(walk_during_off) < 10 or int(walk_during_off) == 999:
-            walk_during_off = np.nan
-
-        igtb_df.loc[uid, 'sitting_weekday'] = sitting_on_weekdays
-        igtb_df.loc[uid, 'sitting_weekend'] = sitting_on_weekend
-        igtb_df.loc[uid, 'walk_during_work'] = float(walk_during_work)
-        igtb_df.loc[uid, 'walk_during_off'] = float(walk_during_off)
-
-        for col in list(psqi_raw_igtb.columns):
-            igtb_df.loc[uid, col] = psqi_raw_igtb.loc[uid, col]
 
     igtb_df = igtb_df.loc[igtb_df['job'] == 'nurse']
-    psqi_col = ['sitting_weekday', 'sitting_weekend', 'walk_during_work', 'walk_during_off', 'psqi']
-    psqi_col = psqi_col + list(psqi_raw_igtb.columns)
-
-    raw_sum = igtb_df[list(psqi_raw_igtb.columns)].sum(axis=1)
-    raw_psqi = igtb_df['psqi']
-
-    # for col in psqi_col:
-        # print_stats(igtb_df, col, func=stats.mannwhitneyu)
-    #    print_latex(igtb_df, col, func=stats.mannwhitneyu)
+    psqi_col = ['psqi']
 
     affect_cols = ['stai', 'pan_PosAffect', 'pan_NegAffect',
                    'rand_GeneralHealth', 'rand_EnergyFatigue', 'swls', 'pss', 'waaq', 'uwes',
                    'bfi_Neuroticism', 'bfi_Conscientiousness', 'bfi_Extraversion', 'bfi_Agreeableness', 'bfi_Openness']
 
-    # for col in affect_cols:
-    #    print_stats(igtb_df, col, func=stats.mannwhitneyu)
-
     # for col in psqi_col:
     for col in affect_cols:
-        # print_latex(igtb_df, col, func=stats.mannwhitneyu)
         multiple_regression(igtb_df, col)
     print()
-    # for col in affect_cols:
-        # print_latex(igtb_df, col, func=stats.mannwhitneyu)

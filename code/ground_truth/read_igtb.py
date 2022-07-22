@@ -165,5 +165,3 @@ if __name__ == '__main__':
         print_latex(igtb_df, col, func=stats.mannwhitneyu)
 
     print()
-    # for col in affect_cols:
-        # print_latex(igtb_df, col, func=stats.mannwhitneyu)

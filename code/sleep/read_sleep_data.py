@@ -40,16 +40,6 @@ def process_main_sleep(sleep_df, timeline_df, realizd_df):
             save_row_df['total_seconds'] = np.nan
             save_row_df['mean_seconds'] = np.nan
             save_row_df['frequency'] = np.nan
-            '''
-            if realizd_df is not None:
-                if len(realizd_df) > 700:
-                    inertia_end_str = (pd.to_datetime(end_str) + timedelta(hours=2)).strftime(date_time_format)[:-3]
-                    inertia_df = realizd_df[end_str:inertia_end_str]
-                    if len(inertia_df) != 0:
-                        save_row_df['total_seconds'] = np.nansum(inertia_df['duration']) / 60
-                        save_row_df['mean_seconds'] = np.nanmean(inertia_df['duration']) / 60
-                        save_row_df['frequency'] = len(inertia_df)
-            '''
 
             save_row_df['work'] = 1 if timeline_df['work'][i] == 1 else 0
 
@@ -199,8 +189,11 @@ if __name__ == '__main__':
     bucket_str = 'tiles-phase1-opendataset'
     root_data_path = Path('/Volumes/Tiles/').joinpath(bucket_str)
 
-    # read ground-truth data
-    igtb_df = read_AllBasic(root_data_path)
+    # please contact the author to access: igtb_day_night.csv.gz
+    if Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz').exists() == False:
+        igtb_df = read_AllBasic(root_data_path)
+        igtb_df.to_csv(Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz'))
+    igtb_df = pd.read_csv(Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz'), index_col=0)
 
     nurse_df = return_nurse_df(igtb_df)
     sleep_stats_df = pd.DataFrame()
@@ -208,9 +201,8 @@ if __name__ == '__main__':
     id_list = list(nurse_df['participant_id'])
     id_list.sort()
 
-    if Path.exists(Path.joinpath(Path.cwd(), 'sleep1.csv.gz')) is False:
+    if Path.exists(Path.joinpath(Path.cwd(), 'sleep.csv.gz')) is False:
         for id in id_list:
-
             # read data
             shift = 'day' if nurse_df.loc[nurse_df['participant_id'] == id].Shift[0] == 'Day shift' else 'night'
             lang = nurse_df.loc[nurse_df['participant_id'] == id].lang[0]
@@ -262,31 +254,23 @@ if __name__ == '__main__':
             tmp_df.loc[:, 'psqi'] = psqi
             tmp_df.loc[:, 'rand_GeneralHealth'] = rand_GeneralHealth
             tmp_df.loc[:, 'rand_EnergyFatigue'] = rand_EnergyFatigue
-
             sleep_stats_df = pd.concat([sleep_stats_df, tmp_df])
 
         sleep_stats_df.to_csv(Path.joinpath(Path.cwd(), 'sleep.csv.gz'), compression='gzip')
     else:
         sleep_stats_df = pd.read_csv(Path.joinpath(Path.cwd(), 'sleep.csv.gz'), index_col=0)
 
-    # compare_cols = ['duration', 'efficiency', 'minutesAsleep', 'total_seconds', 'mean_seconds', 'frequency']
-    # shift_pre-study
-    # sleep_stats_df = sleep_stats_df.loc[sleep_stats_df['shift'] == 'day']
 
     workday_sleep_sleep = sleep_stats_df.loc[sleep_stats_df['work'] == 'workday']
     offday_sleep_sleep = sleep_stats_df.loc[sleep_stats_df['work'] == 'offday']
 
-    compare_cols = ['duration', 'minutesAsleep', 'total_seconds']
+    compare_cols = ['duration', 'minutesAsleep']
     for col in compare_cols:
         print_latex(workday_sleep_sleep, col, print_col='On workdays', func=stats.mannwhitneyu)
         print_latex(offday_sleep_sleep, col, print_col='On off-days', func=stats.mannwhitneyu)
-        # print_stats(sleep_stats_df.loc[sleep_stats_df['shift'] == 'night'], col)
-        # print_stats(sleep_stats_df.loc[sleep_stats_df['shift'] == 'day'], col)
 
     all_sleep_sleep = sleep_stats_df.loc[sleep_stats_df['work'] == 'all']
-    # for col in ['mid', 'duration_diff', 'mid_std']:
     for col in ['mid']:
-        # print_stats(all_sleep_sleep, col, func=stats.mannwhitneyu, demo='lang')
         print_latex(all_sleep_sleep, col, print_col='$\\Delta\\mathbf{MS}$', func=stats.mannwhitneyu)
 
 
