@@ -111,9 +111,11 @@ if __name__ == '__main__':
     bucket_str = 'tiles-phase1-opendataset'
     root_data_path = Path('/Volumes/Tiles/').joinpath(bucket_str)
 
-    igtb_df = read_AllBasic(root_data_path)
-    psqi_raw_igtb = read_PSQI_Raw(root_data_path)
-    igtb_raw = read_IGTB_Raw(root_data_path)
+    # please contact the author to access: igtb_day_night.csv.gz
+    if Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz').exists() == False:
+        igtb_df = read_AllBasic(root_data_path)
+        igtb_df.to_csv(Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz'))
+    igtb_df = pd.read_csv(Path(os.path.realpath(__file__)).parents[1].joinpath('igtb_day_night.csv.gz'), index_col=0)
 
     sleep_stats_df = pd.read_csv(Path(__file__).parent.absolute().parents[0].joinpath('sleep', 'sleep.csv.gz'), index_col=0)
     sleep_work_df = sleep_stats_df.loc[sleep_stats_df['work'] == 'workday']
