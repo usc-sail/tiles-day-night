@@ -4,3 +4,5 @@ data/*
 *.csv
 .idea*
 .Rproj.user
+r_code_result/.DS_Store
+r_code_result/rest/.DS_Store
