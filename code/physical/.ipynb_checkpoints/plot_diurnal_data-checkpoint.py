@@ -138,9 +138,9 @@ if __name__ == '__main__':
                 
                 stats_value, p = stats.ttest_ind(np.array(tmp_day_df.loc[tmp_day_df['type'] == col]['data']), np.array(tmp_night_df.loc[tmp_night_df['type'] == col]['data']))        
                 
-                p_val_df.loc[x_tick_list[time], "p-val"] = p
-                print("\nP_VALUE ", p_val_df)
-                print("------------------------------------")
+                # p_val_df.loc[x_tick_list[time], "p-val"] = p
+                # print("\nP_VALUE ", p_val_df)
+                # print("------------------------------------")
                 if p < 0.01:
                     x_tick_list[time] = x_tick_list[time] + '**'
                 elif p < 0.05:
